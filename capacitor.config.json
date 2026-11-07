@@ -1,0 +1,12 @@
+{
+  "appId": "com.rit.control",
+  "appName": "RIT Control",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
