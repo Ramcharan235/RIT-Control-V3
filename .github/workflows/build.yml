@@ -1,0 +1,63 @@
+name: Build RIT Control APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:        # lets you press "Run workflow" by hand
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install app packages
+        run: npm install
+
+      - name: Create the Android project
+        run: npx cap add android
+
+      - name: Add RIT native code (full screen + instant scan)
+        run: cp MainActivity.java android/app/src/main/java/com/rit/control/MainActivity.java
+
+      - name: Icons and car-logo start screen
+        run: |
+          pip install pillow
+          python make_icons.py
+
+      - name: Sync web files into the app
+        run: npx cap sync android
+
+      - name: Use the same signing key as before (updates install over the old app)
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
+      - name: Build the APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Save the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RIT-Control-V3-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
